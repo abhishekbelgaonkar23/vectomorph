@@ -64,11 +64,12 @@ export function SVGGrid({
             className="group relative overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-0 bg-white dark:bg-gray-900"
           >
             <CardContent className="p-0">
-              {/* SVG Preview */}
-              <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 overflow-hidden">
-                <div className="absolute inset-0 p-3 flex items-center justify-center">
+              {/* SVG Preview - Reliable Display */}
+              <div className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                <div className="w-full h-full relative">
                   <div
-                    className="w-full h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:h-auto [&_svg]:drop-shadow-sm"
+                    className="absolute inset-0 p-2 [&_svg]:w-full [&_svg]:h-full [&_svg]:object-contain [&_svg]:drop-shadow-sm"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     dangerouslySetInnerHTML={{ __html: result.svgContent }}
                   />
                 </div>

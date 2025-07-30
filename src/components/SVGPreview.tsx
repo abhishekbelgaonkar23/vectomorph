@@ -114,19 +114,20 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
       </CardHeader>
 
       <CardContent className="p-4">
-        {/* Simple SVG container that shows the complete image */}
+        {/* Reliable SVG container that shows the complete image */}
         <div
-          className="relative w-full h-48 bg-muted/20 border border-border rounded-lg shadow-sm"
+          className="relative w-full h-48 bg-neutral-100 dark:bg-neutral-800 border border-border rounded-lg shadow-sm overflow-hidden"
         >
           <div
             ref={svgContainerRef}
-            className="absolute inset-0 p-4 flex items-center justify-center"
+            className="w-full h-full relative"
             role="img"
             aria-label={`SVG preview of converted image: ${displayName}`}
             tabIndex={0}
           >
             <div
-              className="w-full h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:h-auto"
+              className="absolute inset-0 p-2 [&_svg]:w-full [&_svg]:h-full [&_svg]:object-contain"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               dangerouslySetInnerHTML={{ __html: svgContent }}
             />
           </div>
