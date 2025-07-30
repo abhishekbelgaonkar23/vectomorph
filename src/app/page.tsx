@@ -382,23 +382,6 @@ export default function HomePage() {
               Supports PNG, JPG, BMP, GIF • Max 10MB each • Processed locally
             </p>
           </div>
-
-          {/* Development test button */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="text-center mt-2">
-              <Button
-                onClick={async () => {
-                  const available = await imageProcessingService.testImageTracerAvailability();
-                  alert(`ImageTracer available: ${available}`);
-                }}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground"
-              >
-                Test ImageTracer (Dev)
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     );

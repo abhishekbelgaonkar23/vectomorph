@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Eye, Download, Copy, Check } from 'lucide-react';
 import { Button } from '~/components/ui/button';
+import { optimizeSVGForDisplay } from '~/lib/svg-utils';
 import type { SVGPreviewProps } from '~/types/app';
 
 /**
@@ -114,22 +115,16 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
       </CardHeader>
 
       <CardContent className="p-4">
-        {/* Reliable SVG container that shows the complete image */}
+        {/* Optimized SVG container - shows complete image centered and scaled */}
         <div
-          className="relative w-full h-48 bg-neutral-100 dark:bg-neutral-800 border border-border rounded-lg shadow-sm overflow-hidden"
+          ref={svgContainerRef}
+          className="relative w-full h-48 bg-neutral-100 dark:bg-neutral-800 border border-border rounded-lg shadow-sm overflow-hidden p-2 flex items-center justify-center"
+          role="img"
+          aria-label={`SVG preview of converted image: ${displayName}`}
+          tabIndex={0}
         >
-          <div
-            ref={svgContainerRef}
-            className="w-full h-full relative"
-            role="img"
-            aria-label={`SVG preview of converted image: ${displayName}`}
-            tabIndex={0}
-          >
-            <div
-              className="absolute inset-0 p-2 [&_svg]:w-full [&_svg]:h-full [&_svg]:object-contain"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              dangerouslySetInnerHTML={{ __html: svgContent }}
-            />
+          <div className="[&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:object-contain">
+            <div dangerouslySetInnerHTML={{ __html: optimizeSVGForDisplay(svgContent) }} />
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Download, X } from 'lucide-react';
+import { optimizeSVGForDisplay } from '~/lib/svg-utils';
 import type { SVGGridProps, ConversionResult } from '~/types/app';
 import { cn } from '~/lib/utils';
 
@@ -64,14 +65,10 @@ export function SVGGrid({
             className="group relative overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-0 bg-white dark:bg-gray-900"
           >
             <CardContent className="p-0">
-              {/* SVG Preview - Reliable Display */}
-              <div className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                <div className="w-full h-full relative">
-                  <div
-                    className="absolute inset-0 p-2 [&_svg]:w-full [&_svg]:h-full [&_svg]:object-contain [&_svg]:drop-shadow-sm"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    dangerouslySetInnerHTML={{ __html: result.svgContent }}
-                  />
+              {/* SVG Preview - Optimized Display */}
+              <div className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden p-2 flex items-center justify-center">
+                <div className="[&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:object-contain [&_svg]:drop-shadow-sm">
+                  <div dangerouslySetInnerHTML={{ __html: optimizeSVGForDisplay(result.svgContent) }} />
                 </div>
                 
                 {/* Overlay with actions - appears on hover */}
