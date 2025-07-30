@@ -71,13 +71,13 @@ export default function HomePage() {
     }));
 
     const results: ConversionResult[] = [];
-    
+
     try {
       // Process each file sequentially
       for (let i = 0; i < files.length; i++) {
         const file = files[i]!;
         const startTime = Date.now();
-        
+
         setAppState(prev => ({
           ...prev,
           currentlyProcessing: file.name
@@ -107,8 +107,8 @@ export default function HomePage() {
 
         } catch (error) {
           // Handle individual file processing errors
-          const errorMessage = error instanceof AppError 
-            ? error.userMessage 
+          const errorMessage = error instanceof AppError
+            ? error.userMessage
             : 'An unexpected error occurred during image processing';
 
           const result: ConversionResult = {
@@ -142,8 +142,8 @@ export default function HomePage() {
 
     } catch (error) {
       // Handle batch processing errors
-      const errorMessage = error instanceof AppError 
-        ? error.userMessage 
+      const errorMessage = error instanceof AppError
+        ? error.userMessage
         : 'An unexpected error occurred during batch processing';
 
       setAppState(prev => ({
@@ -172,7 +172,7 @@ export default function HomePage() {
     });
     setCurrentSession(null);
     setProcessingMessage('Processing images...');
-    
+
     // Reset error boundary if available
     errorBoundaryRef.current?.reset();
   }, []);
@@ -205,7 +205,7 @@ export default function HomePage() {
     if (appState.currentlyProcessing) {
       return `Converting ${appState.currentlyProcessing}...`;
     }
-    
+
     switch (appState.processingState) {
       case ProcessingState.UPLOADING:
         return 'Preparing images for conversion...';
@@ -224,9 +224,9 @@ export default function HomePage() {
     if (appState.isProcessing) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <LoadingIndicator 
-            isVisible={true} 
-            message={getLoadingMessage()} 
+          <LoadingIndicator
+            isVisible={true}
+            message={getLoadingMessage()}
           />
           {appState.conversionResults.length > 0 && (
             <div className="mt-4 text-sm text-muted-foreground">
@@ -255,10 +255,10 @@ export default function HomePage() {
                   {appState.error}
                 </AlertDescription>
               </Alert>
-              
+
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 {appState.uploadedFiles.length > 0 && (
-                  <Button 
+                  <Button
                     onClick={handleRetry}
                     variant="outline"
                     size="sm"
@@ -268,7 +268,7 @@ export default function HomePage() {
                     Retry
                   </Button>
                 )}
-                <Button 
+                <Button
                   onClick={handleNewConversion}
                   variant="default"
                   size="sm"
@@ -292,12 +292,12 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-4 border-b border-border/50">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              {appState.conversionResults.length === 1 
+              {appState.conversionResults.length === 1
                 ? 'Conversion completed successfully'
                 : `${appState.conversionResults.length} conversions completed`
               }
             </div>
-            
+
             <div className="flex items-center gap-2 shrink-0">
               {appState.conversionResults.filter(r => !r.error).length > 1 && (
                 <Button
@@ -326,8 +326,8 @@ export default function HomePage() {
                   Download All
                 </Button>
               )}
-              
-              <Button 
+
+              <Button
                 onClick={handleNewConversion}
                 variant="outline"
                 size="default"
@@ -343,13 +343,13 @@ export default function HomePage() {
           <div className="flex-1 overflow-y-auto py-4">
             {appState.conversionResults.length === 1 ? (
               <div className="max-w-2xl mx-auto">
-                <SVGPreview 
+                <SVGPreview
                   svgContent={appState.conversionResults[0]!.svgContent}
                   originalFileName={appState.conversionResults[0]!.file.name}
                 />
               </div>
             ) : (
-              <SVGGrid 
+              <SVGGrid
                 results={appState.conversionResults.filter(r => !r.error)}
                 onRemove={(id) => {
                   setAppState(prev => ({
@@ -375,18 +375,18 @@ export default function HomePage() {
             disabled={isDropzoneDisabled}
             multiple={true} // Enable multiple file selection
           />
-          
+
           {/* Quick info */}
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">
               Supports PNG, JPG, BMP, GIF • Max 10MB each • Processed locally
             </p>
           </div>
-          
+
           {/* Development test button */}
           {process.env.NODE_ENV === 'development' && (
             <div className="text-center mt-2">
-              <Button 
+              <Button
                 onClick={async () => {
                   const available = await imageProcessingService.testImageTracerAvailability();
                   alert(`ImageTracer available: ${available}`);
@@ -422,7 +422,7 @@ export default function HomePage() {
             VectoMorph
           </h1>
         </div>
-        
+
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Shield className="h-3 w-3 text-green-600" />
@@ -459,27 +459,27 @@ export default function HomePage() {
           <div className="flex items-center gap-4">
             <span>Built by</span>
             <div className="flex items-center gap-3">
-              <a 
-                href="https://github.com/abhishekbelgaonkar23" 
-                target="_blank" 
+              <a
+                href="https://github.com/abhishekbelgaonkar23"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 hover:text-foreground transition-colors"
               >
                 <Github className="h-4 w-4" />
                 <span className="font-medium">Abhishek Belgaonkar</span>
               </a>
-              <a 
-                href="https://x.com/AbhishekBelgaon" 
-                target="_blank" 
+              <a
+                href="https://x.com/AbhishekBelgaon"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 hover:text-foreground transition-colors"
               >
                 <Twitter className="h-4 w-4" />
-                <span className="sr-only">Twitter</span>
+                <span className="font-medium">@AbhishekBelgaon</span>
               </a>
             </div>
           </div>
-          
+
           <div className="text-center sm:text-right">
             <p className="text-xs">
               All processing happens locally. No data uploaded.
