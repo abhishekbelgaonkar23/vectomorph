@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Jersey_15 } from "next/font/google";
 import { ErrorBoundary } from "~/components/ErrorBoundary";
 
 export const metadata: Metadata = {
@@ -15,11 +15,17 @@ const geist = Geist({
 	variable: "--font-geist-sans",
 });
 
+const jersey15 = Jersey_15({
+	subsets: ["latin"],
+	weight: "400",
+	variable: "--font-jersey-15",
+});
+
 export default function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
-		<html lang="en" className={`${geist.variable}`}>
+		<html lang="en" className={`${geist.variable} ${jersey15.variable}`}>
 			<body>
 				<ErrorBoundary>
 					{children}

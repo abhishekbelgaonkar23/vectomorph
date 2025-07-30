@@ -124,8 +124,8 @@ describe('HomePage State Management', () => {
     // Should show download button
     expect(screen.getByTestId('download-button')).toBeInTheDocument();
     
-    // Should show "Convert Another Image" button
-    expect(screen.getByText('Convert Another Image')).toBeInTheDocument();
+    // Should show "Convert Another" button
+    expect(screen.getByText('Convert Another')).toBeInTheDocument();
     
     // Loading indicator should not be visible after completion
     expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument();
@@ -208,8 +208,8 @@ describe('HomePage State Management', () => {
       expect(screen.getByTestId('svg-preview')).toBeInTheDocument();
     });
     
-    // Click "Convert Another Image"
-    fireEvent.click(screen.getByText('Convert Another Image'));
+    // Click "Convert Another"
+    fireEvent.click(screen.getByText('Convert Another'));
     
     // Should return to initial state
     expect(screen.getByTestId('file-dropzone')).toBeInTheDocument();

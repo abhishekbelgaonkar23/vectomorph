@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { FileDropzone } from '~/components/FileDropzone';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { SVGPreview } from '~/components/SVGPreview';
@@ -8,7 +9,7 @@ import { DownloadButton } from '~/components/DownloadButton';
 import { Alert, AlertDescription } from '~/components/ui/alert';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { AlertCircle, RefreshCw, FileImage, Zap, Shield, Globe } from 'lucide-react';
+import { AlertCircle, RefreshCw, FileImage, Zap, Shield, Globe, Github, Twitter } from 'lucide-react';
 import { imageProcessingService } from '~/lib/image-processing.service';
 import { fileHandlingService } from '~/lib/file-handling.service';
 import type { AppState, ConversionSession, AppConfig } from '~/types/app';
@@ -193,7 +194,7 @@ export default function HomePage() {
     // Show loading indicator during processing
     if (appState.isProcessing) {
       return (
-        <div className="flex flex-col items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center">
           <LoadingIndicator 
             isVisible={true} 
             message={getLoadingMessage()} 
@@ -205,29 +206,29 @@ export default function HomePage() {
     // Show error state with recovery options
     if (appState.error) {
       return (
-        <div className="flex flex-col items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center">
           <Card className="w-full max-w-lg mx-auto">
-            <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2 text-destructive text-xl">
-                <AlertCircle className="h-6 w-6" />
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="flex items-center justify-center gap-2 text-destructive">
+                <AlertCircle className="h-5 w-5" />
                 Conversion Failed
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm leading-relaxed">
+                <AlertDescription className="text-sm">
                   {appState.error}
                 </AlertDescription>
               </Alert>
               
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 {appState.uploadedFile && (
                   <Button 
                     onClick={handleRetry}
                     variant="outline"
-                    size="default"
-                    className="flex items-center gap-2 min-w-[120px]"
+                    size="sm"
+                    className="flex items-center gap-2"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Retry
@@ -236,30 +237,13 @@ export default function HomePage() {
                 <Button 
                   onClick={handleNewConversion}
                   variant="default"
-                  size="default"
-                  className="flex items-center gap-2 min-w-[140px]"
+                  size="sm"
+                  className="flex items-center gap-2"
                 >
                   <FileImage className="h-4 w-4" />
                   Try Another Image
                 </Button>
               </div>
-              
-              {/* Development test button */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="pt-4 border-t">
-                  <Button 
-                    onClick={async () => {
-                      const available = await imageProcessingService.testImageTracerAvailability();
-                      alert(`ImageTracer available: ${available}`);
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-xs text-muted-foreground"
-                  >
-                    Test ImageTracer (Dev)
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -269,23 +253,25 @@ export default function HomePage() {
     // Show SVG preview and download when conversion is complete
     if (appState.svgResult && appState.uploadedFile) {
       return (
-        <div className="space-y-8">
+        <div className="w-full space-y-4">
           {/* Success message */}
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium mb-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Conversion completed successfully
             </div>
           </div>
 
-          {/* SVG Preview */}
-          <SVGPreview 
-            svgContent={appState.svgResult}
-            originalFileName={appState.uploadedFile.name}
-          />
+          {/* SVG Preview - Compact */}
+          <div className="max-h-[40vh] overflow-hidden">
+            <SVGPreview 
+              svgContent={appState.svgResult}
+              originalFileName={appState.uploadedFile.name}
+            />
+          </div>
           
           {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <DownloadButton
               svgContent={appState.svgResult}
               fileName={appState.uploadedFile.name}
@@ -294,10 +280,10 @@ export default function HomePage() {
               onClick={handleNewConversion}
               variant="outline"
               size="default"
-              className="flex items-center gap-2 min-w-[160px]"
+              className="flex items-center gap-2"
             >
               <FileImage className="h-4 w-4" />
-              Convert Another Image
+              Convert Another
             </Button>
           </div>
         </div>
@@ -306,7 +292,7 @@ export default function HomePage() {
 
     // Default state - show file dropzone
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="w-full max-w-2xl mx-auto">
         <FileDropzone
           onFileSelect={handleFileSelect}
           acceptedTypes={appConfig.supportedFormats}
@@ -314,9 +300,16 @@ export default function HomePage() {
           disabled={isDropzoneDisabled}
         />
         
+        {/* Quick info */}
+        <div className="mt-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Supports PNG, JPG, BMP, GIF • Max 10MB • Processed locally
+          </p>
+        </div>
+        
         {/* Development test button */}
         {process.env.NODE_ENV === 'development' && (
-          <div className="text-center">
+          <div className="text-center mt-2">
             <Button 
               onClick={async () => {
                 const available = await imageProcessingService.testImageTracerAvailability();
@@ -335,117 +328,84 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/20">
-        <div className="container mx-auto px-4 py-12 sm:py-16 lg:py-20">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Main heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                VectoMorph
-              </span>
-            </h1>
-            
-            {/* Subtitle */}
-            <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-8 leading-relaxed">
-              Convert raster images to scalable vector graphics (SVG) entirely in your browser
-            </p>
-            
-            {/* Feature highlights */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-12">
-              <div className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground">
-                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" aria-hidden="true" />
-                <span>Privacy-focused</span>
-              </div>
-              <div className="hidden sm:block w-1 h-1 bg-muted-foreground/30 rounded-full" aria-hidden="true" />
-              <div className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground">
-                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" aria-hidden="true" />
-                <span>Client-side processing</span>
-              </div>
-              <div className="hidden sm:block w-1 h-1 bg-muted-foreground/30 rounded-full" aria-hidden="true" />
-              <div className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground">
-                <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" aria-hidden="true" />
-                <span>No data uploaded</span>
-              </div>
-            </div>
+    <main className="h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 relative">
+            <Image
+              src="/Untitled.svg"
+              alt="VectoMorph Logo"
+              width={32}
+              height={32}
+              className="w-full h-full"
+            />
+          </div>
+          <h1 className="text-2xl font-bold font-[family-name:var(--font-jersey-15)] bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            VectoMorph
+          </h1>
+        </div>
+        
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Shield className="h-3 w-3 text-green-600" />
+            <span className="hidden sm:inline">Privacy-focused</span>
+          </div>
+          <div className="hidden sm:block w-1 h-1 bg-muted-foreground/30 rounded-full" />
+          <div className="flex items-center gap-1">
+            <Zap className="h-3 w-3 text-blue-600" />
+            <span className="hidden sm:inline">Client-side</span>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Main Application Section */}
-      <section className="py-8 sm:py-12 lg:py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            {/* Application content */}
-            <div className="space-y-8">
-              {renderMainContent()}
-            </div>
-            
-            {/* How it works section - only show when idle */}
-            {appState.processingState === ProcessingState.IDLE && !appState.uploadedFile && (
-              <div className="mt-16 sm:mt-20">
-                <div className="text-center mb-12">
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4">
-                    How it works
-                  </h2>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
-                    Simple, secure, and fast image-to-SVG conversion in three easy steps
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <Card className="text-center">
-                    <CardContent className="pt-6">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileImage className="h-6 w-6 text-primary" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-semibold mb-2">1. Upload Image</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Drag and drop or click to select your raster image (PNG, JPG, BMP, GIF)
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="text-center">
-                    <CardContent className="pt-6">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Zap className="h-6 w-6 text-primary" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-semibold mb-2">2. Auto Convert</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Our client-side engine processes your image locally using advanced tracing algorithms
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="text-center">
-                    <CardContent className="pt-6">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <RefreshCw className="h-6 w-6 text-primary" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-semibold mb-2">3. Download SVG</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Preview your scalable vector graphic and download it instantly
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            )}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
+        <div className="w-full max-w-4xl mx-auto">
+          {/* Subtitle */}
+          <div className="text-center mb-6">
+            <p className="text-lg text-muted-foreground">
+              Convert raster images to scalable vector graphics entirely in your browser
+            </p>
+          </div>
+
+          {/* Main Application Content */}
+          <div className="flex-1 flex items-center justify-center">
+            {renderMainContent()}
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30 mt-16 sm:mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-sm text-muted-foreground">
-            <p className="mb-2">
-              Built with privacy in mind. All processing happens locally in your browser.
-            </p>
-            <p>
-              No data is sent to external servers or stored anywhere.
+      <footer className="border-t bg-background/80 backdrop-blur-sm p-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span>Built by</span>
+            <div className="flex items-center gap-3">
+              <a 
+                href="https://github.com/abhishekbelgaonkar23" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+              >
+                <Github className="h-4 w-4" />
+                <span className="font-medium">Abhishek Belgaonkar</span>
+              </a>
+              <a 
+                href="https://x.com/AbhishekBelgaon" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+              >
+                <Twitter className="h-4 w-4" />
+                <span className="sr-only">Twitter</span>
+              </a>
+            </div>
+          </div>
+          
+          <div className="text-center sm:text-right">
+            <p className="text-xs">
+              All processing happens locally. No data uploaded.
             </p>
           </div>
         </div>
@@ -453,7 +413,7 @@ export default function HomePage() {
 
       {/* Session info for debugging (only in development) */}
       {process.env.NODE_ENV === 'development' && currentSession && (
-        <div className="fixed bottom-4 right-4 max-w-sm">
+        <div className="fixed bottom-20 right-4 max-w-sm">
           <Card className="bg-background/95 backdrop-blur-sm border-muted">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground">Session Info (Dev)</CardTitle>
