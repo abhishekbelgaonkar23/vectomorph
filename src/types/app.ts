@@ -9,12 +9,21 @@ export enum ProcessingState {
   ERROR = 'error'
 }
 
+export interface ConversionResult {
+  id: string;
+  file: File;
+  svgContent: string;
+  error?: string;
+  processingTime?: number;
+}
+
 export interface AppState {
-  uploadedFile: File | null;
+  uploadedFiles: File[];
   isProcessing: boolean;
-  svgResult: string | null;
+  conversionResults: ConversionResult[];
   error: string | null;
   processingState: ProcessingState;
+  currentlyProcessing?: string; // file name being processed
 }
 
 export interface ConversionSession {
@@ -44,10 +53,11 @@ export interface AppConfig {
 
 // Component prop interfaces
 export interface FileDropzoneProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (files: File[]) => void; // Changed to support multiple files
   acceptedTypes: string[];
   maxFileSize: number;
   disabled?: boolean;
+  multiple?: boolean; // New prop for multiple file selection
 }
 
 export interface ImageProcessorProps {
@@ -65,6 +75,13 @@ export interface LoadingIndicatorProps {
 export interface SVGPreviewProps {
   svgContent: string;
   originalFileName: string;
+}
+
+export interface SVGGridProps {
+  results: ConversionResult[];
+  onDownloadAll?: () => void;
+  onDownloadSingle?: (result: ConversionResult) => void;
+  onRemove?: (id: string) => void;
 }
 
 export interface DownloadButtonProps {

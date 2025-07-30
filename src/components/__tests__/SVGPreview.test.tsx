@@ -248,7 +248,7 @@ describe('SVGPreview', () => {
     );
 
     const svgWrapper = screen.getByRole('img').firstElementChild;
-    expect(svgWrapper).toHaveClass('w-full', 'h-full');
+    expect(svgWrapper).toHaveClass('w-full', 'h-full', 'flex', 'items-center', 'justify-center');
   });
 
   it('displays metadata correctly on different screen sizes', () => {

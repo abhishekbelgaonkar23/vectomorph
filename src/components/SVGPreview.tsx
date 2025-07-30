@@ -23,14 +23,14 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
       const parser = new DOMParser();
       const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
       const svgElement = svgDoc.querySelector('svg');
-      
+
       if (svgElement) {
         const width = svgElement.getAttribute('width');
         const height = svgElement.getAttribute('height');
         const viewBox = svgElement.getAttribute('viewBox');
-        
+
         let dimensions = { width: 300, height: 300 }; // default fallback
-        
+
         if (width && height) {
           dimensions = {
             width: parseFloat(width),
@@ -42,7 +42,7 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
             dimensions = { width: vbWidth, height: vbHeight };
           }
         }
-        
+
         setSvgDimensions(dimensions);
       }
     } catch (error) {
@@ -66,21 +66,21 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
   const displayName = originalFileName.replace(/\.[^/.]+$/, '');
 
   return (
-    <Card 
+    <Card
       className="w-full max-w-2xl mx-auto"
       role="region"
       aria-labelledby="svg-preview-title"
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle 
+          <CardTitle
             id="svg-preview-title"
             className="flex items-center gap-2 text-base font-semibold"
           >
             <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
             SVG Preview
           </CardTitle>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -101,7 +101,7 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
             )}
           </Button>
         </div>
-        
+
         <p className="text-xs text-muted-foreground">
           <span className="font-medium">{displayName}</span>
           {svgDimensions && (
@@ -115,29 +115,19 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
 
       <CardContent className="p-4">
         {/* Simple SVG container that shows the complete image */}
-        <div 
-          className="relative w-full h-48 bg-muted/20 border border-border rounded-lg overflow-hidden shadow-sm"
+        <div
+          className="relative w-full h-48 bg-muted/20 border border-border rounded-lg shadow-sm"
         >
           <div
             ref={svgContainerRef}
-            className="absolute inset-0 flex items-center justify-center p-4"
+            className="absolute inset-0 p-4 flex items-center justify-center"
             role="img"
             aria-label={`SVG preview of converted image: ${displayName}`}
             tabIndex={0}
           >
             <div
-              className="w-full h-full"
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              dangerouslySetInnerHTML={{ 
-                __html: svgContent.replace(
-                  /<svg([^>]*)>/,
-                  '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
-                )
-              }}
+              className="w-full h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:h-auto"
+              dangerouslySetInnerHTML={{ __html: svgContent }}
             />
           </div>
         </div>
@@ -147,7 +137,7 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
           <div className="text-xs text-muted-foreground">
             SVG • Scalable Vector Graphics
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"

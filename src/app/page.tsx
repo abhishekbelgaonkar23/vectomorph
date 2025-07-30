@@ -5,14 +5,15 @@ import Image from 'next/image';
 import { FileDropzone } from '~/components/FileDropzone';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { SVGPreview } from '~/components/SVGPreview';
+import { SVGGrid } from '~/components/SVGGrid';
 import { DownloadButton } from '~/components/DownloadButton';
 import { Alert, AlertDescription } from '~/components/ui/alert';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { AlertCircle, RefreshCw, FileImage, Zap, Shield, Globe, Github, Twitter } from 'lucide-react';
+import { AlertCircle, RefreshCw, FileImage, Zap, Shield, Globe, Github, Twitter, DownloadCloud } from 'lucide-react';
 import { imageProcessingService } from '~/lib/image-processing.service';
 import { fileHandlingService } from '~/lib/file-handling.service';
-import type { AppState, ConversionSession, AppConfig } from '~/types/app';
+import type { AppState, ConversionSession, AppConfig, ConversionResult } from '~/types/app';
 import { ProcessingState, AppError } from '~/types/app';
 import { cn } from '~/lib/utils';
 
@@ -34,11 +35,12 @@ export default function HomePage() {
 
   // Main application state
   const [appState, setAppState] = useState<AppState>({
-    uploadedFile: null,
+    uploadedFiles: [],
     isProcessing: false,
-    svgResult: null,
+    conversionResults: [],
     error: null,
-    processingState: ProcessingState.IDLE
+    processingState: ProcessingState.IDLE,
+    currentlyProcessing: undefined
   });
 
   // Current conversion session
@@ -52,85 +54,107 @@ export default function HomePage() {
 
   /**
    * Handles file selection from FileDropzone
-   * Initiates the conversion process
+   * Initiates the conversion process for multiple files
    */
-  const handleFileSelect = useCallback(async (file: File) => {
-    // Create new conversion session
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    const session: ConversionSession = {
-      id: sessionId,
-      originalFile: file,
-      state: ProcessingState.UPLOADING,
-      startTime: new Date()
-    };
+  const handleFileSelect = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
 
-    setCurrentSession(session);
+    // Reset state for new batch
     setAppState(prev => ({
       ...prev,
-      uploadedFile: file,
+      uploadedFiles: files,
       isProcessing: true,
-      svgResult: null,
+      conversionResults: [],
       error: null,
-      processingState: ProcessingState.UPLOADING
+      processingState: ProcessingState.PROCESSING,
+      currentlyProcessing: files[0]?.name
     }));
 
-    setProcessingMessage('Preparing image for conversion...');
-
+    const results: ConversionResult[] = [];
+    
     try {
-      // Transition to processing state
-      const processingSession = { ...session, state: ProcessingState.PROCESSING };
-      setCurrentSession(processingSession);
-      setAppState(prev => ({
-        ...prev,
-        processingState: ProcessingState.PROCESSING
-      }));
+      // Process each file sequentially
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]!;
+        const startTime = Date.now();
+        
+        setAppState(prev => ({
+          ...prev,
+          currentlyProcessing: file.name
+        }));
 
-      setProcessingMessage('Converting image to SVG...');
+        setProcessingMessage(`Converting ${file.name} (${i + 1}/${files.length})...`);
 
-      // Process the image using ImageProcessingService
-      const svgResult = await imageProcessingService.processImage(file);
+        try {
+          // Process the image using ImageProcessingService
+          const svgContent = await imageProcessingService.processImage(file);
+          const processingTime = Date.now() - startTime;
 
-      // Transition to completed state
-      const completedSession: ConversionSession = {
-        ...processingSession,
-        state: ProcessingState.COMPLETED,
-        endTime: new Date(),
-        svgResult
-      };
+          const result: ConversionResult = {
+            id: `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+            file,
+            svgContent,
+            processingTime
+          };
 
-      setCurrentSession(completedSession);
+          results.push(result);
+
+          // Update state with new result
+          setAppState(prev => ({
+            ...prev,
+            conversionResults: [...prev.conversionResults, result]
+          }));
+
+        } catch (error) {
+          // Handle individual file processing errors
+          const errorMessage = error instanceof AppError 
+            ? error.userMessage 
+            : 'An unexpected error occurred during image processing';
+
+          const result: ConversionResult = {
+            id: `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+            file,
+            svgContent: '', // Empty SVG for failed conversions
+            error: errorMessage
+          };
+
+          results.push(result);
+
+          // Update state with error result
+          setAppState(prev => ({
+            ...prev,
+            conversionResults: [...prev.conversionResults, result]
+          }));
+
+          console.error(`Failed to process ${file.name}:`, error);
+        }
+      }
+
+      // All files processed
       setAppState(prev => ({
         ...prev,
         isProcessing: false,
-        svgResult,
-        processingState: ProcessingState.COMPLETED
+        processingState: ProcessingState.COMPLETED,
+        currentlyProcessing: undefined
       }));
 
-      setProcessingMessage('Conversion completed!');
+      setProcessingMessage('All conversions completed!');
 
     } catch (error) {
-      // Handle processing errors
+      // Handle batch processing errors
       const errorMessage = error instanceof AppError 
         ? error.userMessage 
-        : 'An unexpected error occurred during image processing';
+        : 'An unexpected error occurred during batch processing';
 
-      const errorSession: ConversionSession = {
-        ...session,
-        state: ProcessingState.ERROR,
-        endTime: new Date(),
-        error: errorMessage
-      };
-
-      setCurrentSession(errorSession);
       setAppState(prev => ({
         ...prev,
         isProcessing: false,
         error: errorMessage,
-        processingState: ProcessingState.ERROR
+        processingState: ProcessingState.ERROR,
+        currentlyProcessing: undefined
       }));
 
-      // Log detailed error for debugging
-      console.error('Image processing failed:', error);
+      console.error('Batch processing failed:', error);
     }
   }, []);
 
@@ -139,27 +163,28 @@ export default function HomePage() {
    */
   const handleErrorRecovery = useCallback(() => {
     setAppState({
-      uploadedFile: null,
+      uploadedFiles: [],
       isProcessing: false,
-      svgResult: null,
+      conversionResults: [],
       error: null,
-      processingState: ProcessingState.IDLE
+      processingState: ProcessingState.IDLE,
+      currentlyProcessing: undefined
     });
     setCurrentSession(null);
-    setProcessingMessage('Processing image...');
+    setProcessingMessage('Processing images...');
     
     // Reset error boundary if available
     errorBoundaryRef.current?.reset();
   }, []);
 
   /**
-   * Handles retry with the same file
+   * Handles retry with the same files
    */
   const handleRetry = useCallback(() => {
-    if (appState.uploadedFile) {
-      handleFileSelect(appState.uploadedFile);
+    if (appState.uploadedFiles.length > 0) {
+      handleFileSelect(appState.uploadedFiles);
     }
-  }, [appState.uploadedFile, handleFileSelect]);
+  }, [appState.uploadedFiles, handleFileSelect]);
 
   /**
    * Handles starting a new conversion
@@ -177,15 +202,19 @@ export default function HomePage() {
    * Gets the appropriate loading message based on processing state
    */
   const getLoadingMessage = useCallback(() => {
+    if (appState.currentlyProcessing) {
+      return `Converting ${appState.currentlyProcessing}...`;
+    }
+    
     switch (appState.processingState) {
       case ProcessingState.UPLOADING:
-        return 'Preparing image for conversion...';
+        return 'Preparing images for conversion...';
       case ProcessingState.PROCESSING:
-        return 'Converting image to SVG...';
+        return 'Converting images to SVG...';
       default:
         return processingMessage;
     }
-  }, [appState.processingState, processingMessage]);
+  }, [appState.processingState, appState.currentlyProcessing, processingMessage]);
 
   /**
    * Renders the main content based on current state
@@ -194,11 +223,16 @@ export default function HomePage() {
     // Show loading indicator during processing
     if (appState.isProcessing) {
       return (
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
           <LoadingIndicator 
             isVisible={true} 
             message={getLoadingMessage()} 
           />
+          {appState.conversionResults.length > 0 && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              {appState.conversionResults.length} of {appState.uploadedFiles.length} completed
+            </div>
+          )}
         </div>
       );
     }
@@ -206,7 +240,7 @@ export default function HomePage() {
     // Show error state with recovery options
     if (appState.error) {
       return (
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center min-h-[400px] px-4">
           <Card className="w-full max-w-lg mx-auto">
             <CardHeader className="text-center pb-4">
               <CardTitle className="flex items-center justify-center gap-2 text-destructive">
@@ -223,7 +257,7 @@ export default function HomePage() {
               </Alert>
               
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                {appState.uploadedFile && (
+                {appState.uploadedFiles.length > 0 && (
                   <Button 
                     onClick={handleRetry}
                     variant="outline"
@@ -241,7 +275,7 @@ export default function HomePage() {
                   className="flex items-center gap-2"
                 >
                   <FileImage className="h-4 w-4" />
-                  Try Another Image
+                  Try Again
                 </Button>
               </div>
             </CardContent>
@@ -250,39 +284,81 @@ export default function HomePage() {
       );
     }
 
-    // Show SVG preview and download when conversion is complete
-    if (appState.svgResult && appState.uploadedFile) {
+    // Show SVG grid when conversions are complete
+    if (appState.conversionResults.length > 0) {
       return (
-        <div className="w-full space-y-4">
-          {/* Success message */}
-          <div className="text-center">
+        <div className="w-full h-full flex flex-col px-4">
+          {/* Success message and action buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-4 border-b border-border/50">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              Conversion completed successfully
+              {appState.conversionResults.length === 1 
+                ? 'Conversion completed successfully'
+                : `${appState.conversionResults.length} conversions completed`
+              }
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              {appState.conversionResults.filter(r => !r.error).length > 1 && (
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={() => {
+                    // Download all functionality
+                    const validResults = appState.conversionResults.filter(r => !r.error);
+                    validResults.forEach((result, index) => {
+                      setTimeout(() => {
+                        const blob = new Blob([result.svgContent], { type: 'image/svg+xml' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${result.file.name.replace(/\.[^/.]+$/, '')}.svg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                      }, index * 100);
+                    });
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <DownloadCloud className="h-4 w-4" />
+                  Download All
+                </Button>
+              )}
+              
+              <Button 
+                onClick={handleNewConversion}
+                variant="outline"
+                size="default"
+                className="flex items-center gap-2"
+              >
+                <FileImage className="h-4 w-4" />
+                Convert More Images
+              </Button>
             </div>
           </div>
 
-          {/* SVG Preview - Compact */}
-          <SVGPreview 
-            svgContent={appState.svgResult}
-            originalFileName={appState.uploadedFile.name}
-          />
-          
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <DownloadButton
-              svgContent={appState.svgResult}
-              fileName={appState.uploadedFile.name}
-            />
-            <Button 
-              onClick={handleNewConversion}
-              variant="outline"
-              size="default"
-              className="flex items-center gap-2"
-            >
-              <FileImage className="h-4 w-4" />
-              Convert Another
-            </Button>
+          {/* SVG Grid for multiple results or single preview for one result */}
+          <div className="flex-1 overflow-y-auto py-4">
+            {appState.conversionResults.length === 1 ? (
+              <div className="max-w-2xl mx-auto">
+                <SVGPreview 
+                  svgContent={appState.conversionResults[0]!.svgContent}
+                  originalFileName={appState.conversionResults[0]!.file.name}
+                />
+              </div>
+            ) : (
+              <SVGGrid 
+                results={appState.conversionResults.filter(r => !r.error)}
+                onRemove={(id) => {
+                  setAppState(prev => ({
+                    ...prev,
+                    conversionResults: prev.conversionResults.filter(r => r.id !== id)
+                  }));
+                }}
+              />
+            )}
           </div>
         </div>
       );
@@ -290,37 +366,40 @@ export default function HomePage() {
 
     // Default state - show file dropzone
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <FileDropzone
-          onFileSelect={handleFileSelect}
-          acceptedTypes={appConfig.supportedFormats}
-          maxFileSize={appConfig.maxFileSize}
-          disabled={isDropzoneDisabled}
-        />
-        
-        {/* Quick info */}
-        <div className="mt-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Supports PNG, JPG, BMP, GIF • Max 10MB • Processed locally
-          </p>
-        </div>
-        
-        {/* Development test button */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="text-center mt-2">
-            <Button 
-              onClick={async () => {
-                const available = await imageProcessingService.testImageTracerAvailability();
-                alert(`ImageTracer available: ${available}`);
-              }}
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground"
-            >
-              Test ImageTracer (Dev)
-            </Button>
+      <div className="flex flex-col items-center justify-center min-h-[400px] px-4">
+        <div className="w-full max-w-2xl mx-auto">
+          <FileDropzone
+            onFileSelect={handleFileSelect}
+            acceptedTypes={appConfig.supportedFormats}
+            maxFileSize={appConfig.maxFileSize}
+            disabled={isDropzoneDisabled}
+            multiple={true} // Enable multiple file selection
+          />
+          
+          {/* Quick info */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Supports PNG, JPG, BMP, GIF • Max 10MB each • Processed locally
+            </p>
           </div>
-        )}
+          
+          {/* Development test button */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="text-center mt-2">
+              <Button 
+                onClick={async () => {
+                  const available = await imageProcessingService.testImageTracerAvailability();
+                  alert(`ImageTracer available: ${available}`);
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+              >
+                Test ImageTracer (Dev)
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -358,8 +437,8 @@ export default function HomePage() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
-        <div className="w-full max-w-4xl mx-auto">
+      <div className="flex-1 flex flex-col items-center p-4 min-h-0 pb-16">
+        <div className="w-full max-w-4xl mx-auto h-full flex flex-col">
           {/* Subtitle */}
           <div className="text-center mb-6">
             <p className="text-lg text-muted-foreground">
@@ -368,7 +447,7 @@ export default function HomePage() {
           </div>
 
           {/* Main Application Content */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 min-h-0 overflow-y-auto py-4">
             {renderMainContent()}
           </div>
         </div>

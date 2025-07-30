@@ -13,7 +13,8 @@ export function FileDropzone({
   onFileSelect,
   acceptedTypes,
   maxFileSize,
-  disabled = false
+  disabled = false,
+  multiple = false
 }: FileDropzoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -21,17 +22,29 @@ export function FileDropzone({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle file validation and selection
-  const handleFileSelection = useCallback((file: File) => {
+  const handleFileSelection = useCallback((files: File[]) => {
     setError(null);
     
-    const validation = fileHandlingService.validateFile(file, acceptedTypes, maxFileSize);
+    const validFiles: File[] = [];
+    const errors: string[] = [];
     
-    if (!validation.isValid) {
-      setError(validation.error || 'Invalid file');
-      return;
+    for (const file of files) {
+      const validation = fileHandlingService.validateFile(file, acceptedTypes, maxFileSize);
+      
+      if (validation.isValid) {
+        validFiles.push(file);
+      } else {
+        errors.push(`${file.name}: ${validation.error}`);
+      }
     }
-
-    onFileSelect(file);
+    
+    if (errors.length > 0) {
+      setError(errors.join(', '));
+    }
+    
+    if (validFiles.length > 0) {
+      onFileSelect(validFiles);
+    }
   }, [onFileSelect, acceptedTypes, maxFileSize]);
 
   // Handle drag events
@@ -87,13 +100,13 @@ export function FileDropzone({
       return;
     }
     
-    if (files.length > 1) {
+    if (!multiple && files.length > 1) {
       setError('Please drop only one file at a time');
       return;
     }
     
-    handleFileSelection(files[0]!);
-  }, [disabled, handleFileSelection]);
+    handleFileSelection(files);
+  }, [disabled, multiple, handleFileSelection]);
 
   // Handle click to upload
   const handleClick = useCallback(() => {
@@ -108,7 +121,7 @@ export function FileDropzone({
     
     if (files.length === 0) return;
     
-    handleFileSelection(files[0]!);
+    handleFileSelection(files);
     
     // Reset input value to allow selecting the same file again
     if (fileInputRef.current) {
@@ -176,11 +189,17 @@ export function FileDropzone({
 
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">
-              {isDragActive ? 'Drop your image here' : 'Upload an image'}
+              {isDragActive 
+                ? (multiple ? 'Drop your images here' : 'Drop your image here')
+                : (multiple ? 'Upload Multiple Images' : 'Upload an image')
+              }
             </h3>
             
             <p id="dropzone-description" className="text-sm text-muted-foreground">
-              Drag and drop an image file here, or click to browse
+              {multiple 
+                ? 'Select multiple images to convert them all at once'
+                : 'Drag and drop an image file here, or click to browse'
+              }
             </p>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-2 text-xs text-muted-foreground">
@@ -201,7 +220,7 @@ export function FileDropzone({
             }}
           >
             <Upload className="h-4 w-4 mr-2" />
-            Choose File
+            {multiple ? 'Choose Files' : 'Choose File'}
           </Button>
         </CardContent>
 
@@ -214,6 +233,7 @@ export function FileDropzone({
           className="hidden"
           disabled={disabled}
           aria-hidden="true"
+          multiple={multiple}
         />
       </Card>
 
