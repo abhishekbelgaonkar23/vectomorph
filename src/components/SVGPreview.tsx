@@ -4,7 +4,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Eye, Download, Copy, Check } from 'lucide-react';
 import { Button } from '~/components/ui/button';
-import { cn } from '~/lib/utils';
 import type { SVGPreviewProps } from '~/types/app';
 
 /**
@@ -127,12 +126,18 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
             tabIndex={0}
           >
             <div
-              className="max-w-full max-h-full flex items-center justify-center"
+              className="w-full h-full"
               style={{ 
-                width: '100%',
-                height: '100%'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-              dangerouslySetInnerHTML={{ __html: svgContent }}
+              dangerouslySetInnerHTML={{ 
+                __html: svgContent.replace(
+                  /<svg([^>]*)>/,
+                  '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
+                )
+              }}
             />
           </div>
         </div>
