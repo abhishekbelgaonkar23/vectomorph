@@ -49,7 +49,7 @@ describe('SVGPreview', () => {
     );
 
     expect(screen.getByText('SVG Preview')).toBeInTheDocument();
-    expect(screen.getByText('Converted from:')).toBeInTheDocument();
+    expect(screen.getByText('test-image')).toBeInTheDocument();
     expect(screen.getByText('test-image')).toBeInTheDocument();
   });
 
@@ -101,8 +101,8 @@ describe('SVGPreview', () => {
       />
     );
 
-    expect(screen.getByText(/Size: \d+ bytes/)).toBeInTheDocument();
-    expect(screen.getByText('Format: SVG (Scalable Vector Graphics)')).toBeInTheDocument();
+    expect(screen.getByText(/• \d+ bytes/)).toBeInTheDocument();
+    expect(screen.getByText('SVG • Scalable Vector Graphics')).toBeInTheDocument();
   });
 
   it('removes file extension from display name', () => {
@@ -133,12 +133,13 @@ describe('SVGPreview', () => {
     expect(mockClipboard.writeText).toHaveBeenCalledWith(sampleSVG);
 
     await waitFor(() => {
-      expect(screen.getByText('Copied!')).toBeInTheDocument();
+      expect(screen.getByText('Copied')).toBeInTheDocument();
     });
 
     // Check that the button text reverts after timeout
     await waitFor(() => {
-      expect(screen.getByText('Copy SVG')).toBeInTheDocument();
+      expect(screen.queryByText('Copied')).not.toBeInTheDocument();
+      expect(screen.getByText('Copy')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
@@ -247,7 +248,7 @@ describe('SVGPreview', () => {
     );
 
     const svgWrapper = screen.getByRole('img').firstElementChild;
-    expect(svgWrapper).toHaveClass('hover:scale-105');
+    expect(svgWrapper).toHaveClass('max-w-full', 'max-h-full');
   });
 
   it('displays metadata correctly on different screen sizes', () => {
@@ -259,10 +260,10 @@ describe('SVGPreview', () => {
     );
 
     // Check responsive layout classes
-    const metadataContainer = screen.getByText('Format: SVG (Scalable Vector Graphics)').parentElement;
-    expect(metadataContainer).toHaveClass('text-sm', 'text-muted-foreground');
+    const metadataContainer = screen.getByText('SVG • Scalable Vector Graphics');
+    expect(metadataContainer).toHaveClass('text-xs', 'text-muted-foreground');
 
     const actionsContainer = screen.getByRole('button', { name: /download/i }).parentElement;
-    expect(actionsContainer).toHaveClass('flex', 'items-center', 'gap-2');
+    expect(actionsContainer).toHaveClass('mt-3', 'flex', 'items-center', 'justify-between');
   });
 });

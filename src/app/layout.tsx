@@ -7,7 +7,7 @@ import { ErrorBoundary } from "~/components/ErrorBoundary";
 export const metadata: Metadata = {
 	title: "VectoMorph - Convert Images to SVG",
 	description: "Convert raster images to scalable vector graphics (SVG) entirely in your browser. Privacy-focused, client-side processing with no data uploaded.",
-	icons: [{ rel: "icon", url: "/favicon.ico" }],
+	icons: [{ rel: "icon", url: "/Untitled.svg" }],
 };
 
 const geist = Geist({

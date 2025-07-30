@@ -8,8 +8,8 @@ import { cn } from '~/lib/utils';
 import type { SVGPreviewProps } from '~/types/app';
 
 /**
- * SVGPreview component renders generated SVG content safely with responsive display
- * Uses shadcn/ui Card component with proper accessibility attributes
+ * SVGPreview component renders generated SVG content as a small complete preview
+ * Simple design that shows the entire image in a compact format
  */
 export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
   const svgContainerRef = useRef<HTMLDivElement>(null);
@@ -63,71 +63,61 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
     }
   };
 
-  // Calculate aspect ratio for responsive display
-  const aspectRatio = svgDimensions 
-    ? (svgDimensions.height / svgDimensions.width) * 100 
-    : 100;
-
   // Generate filename without extension for display
   const displayName = originalFileName.replace(/\.[^/.]+$/, '');
 
   return (
     <Card 
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-2xl mx-auto"
       role="region"
       aria-labelledby="svg-preview-title"
     >
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle 
             id="svg-preview-title"
-            className="flex items-center gap-2 text-lg font-semibold"
+            className="flex items-center gap-2 text-base font-semibold"
           >
-            <Eye className="h-5 w-5 text-primary" aria-hidden="true" />
+            <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
             SVG Preview
           </CardTitle>
           
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopySVG}
-              className="flex items-center gap-2"
-              aria-label="Copy SVG content to clipboard"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" aria-hidden="true" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" aria-hidden="true" />
-                  Copy SVG
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopySVG}
+            className="h-8 px-2 text-xs"
+            aria-label="Copy SVG content to clipboard"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3 mr-1" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3 mr-1" />
+                Copy
+              </>
+            )}
+          </Button>
         </div>
         
-        <p className="text-sm text-muted-foreground">
-          Converted from: <span className="font-medium">{displayName}</span>
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium">{displayName}</span>
           {svgDimensions && (
             <span className="ml-2">
               • {Math.round(svgDimensions.width)} × {Math.round(svgDimensions.height)}px
             </span>
           )}
+          <span className="ml-2">• {new Blob([svgContent]).size} bytes</span>
         </p>
       </CardHeader>
 
-      <CardContent className="p-6">
-        {/* Responsive SVG container */}
+      <CardContent className="p-4">
+        {/* Simple SVG container that shows the complete image */}
         <div 
-          className={cn(
-            "relative w-full bg-background border border-border rounded-lg overflow-hidden",
-            "shadow-sm hover:shadow-md transition-shadow duration-200"
-          )}
-          style={{ paddingBottom: `${Math.min(aspectRatio, 75)}%` }}
+          className="relative w-full h-48 bg-muted/20 border border-border rounded-lg overflow-hidden shadow-sm"
         >
           <div
             ref={svgContainerRef}
@@ -137,53 +127,42 @@ export function SVGPreview({ svgContent, originalFileName }: SVGPreviewProps) {
             tabIndex={0}
           >
             <div
-              className={cn(
-                "max-w-full max-h-full flex items-center justify-center",
-                "transition-transform duration-200 hover:scale-105"
-              )}
+              className="max-w-full max-h-full flex items-center justify-center"
+              style={{ 
+                width: '100%',
+                height: '100%'
+              }}
               dangerouslySetInnerHTML={{ __html: svgContent }}
             />
           </div>
-          
-          {/* Overlay for better visual feedback */}
-          <div 
-            className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/5 pointer-events-none"
-            aria-hidden="true"
-          />
         </div>
 
-        {/* SVG metadata and actions */}
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="text-sm text-muted-foreground">
-            <span>Format: SVG (Scalable Vector Graphics)</span>
-            <span className="hidden sm:inline ml-2">•</span>
-            <span className="block sm:inline sm:ml-2">
-              Size: {new Blob([svgContent]).size} bytes
-            </span>
+        {/* Quick actions */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            SVG • Scalable Vector Graphics
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${displayName}.svg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-              }}
-              className="flex items-center gap-2"
-              aria-label={`Download SVG file: ${displayName}.svg`}
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Download
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `${displayName}.svg`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }}
+            className="h-8 px-3 text-xs"
+            aria-label={`Download SVG file: ${displayName}.svg`}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            Download
+          </Button>
         </div>
       </CardContent>
     </Card>

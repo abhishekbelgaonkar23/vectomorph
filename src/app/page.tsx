@@ -263,12 +263,10 @@ export default function HomePage() {
           </div>
 
           {/* SVG Preview - Compact */}
-          <div className="max-h-[40vh] overflow-hidden">
-            <SVGPreview 
-              svgContent={appState.svgResult}
-              originalFileName={appState.uploadedFile.name}
-            />
-          </div>
+          <SVGPreview 
+            svgContent={appState.svgResult}
+            originalFileName={appState.uploadedFile.name}
+          />
           
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
